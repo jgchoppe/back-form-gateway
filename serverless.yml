@@ -1,0 +1,91 @@
+service: ${file(./config.json):deployment.serviceName}
+
+org: fleew
+
+provider:
+  name: aws
+  runtime: python3.8
+  region: ${file(./config.json):deployment.region}
+  timeout: 60
+
+resources:
+  Resources:
+    CognitoUserPool:
+      Type: "AWS::Cognito::UserPool"
+      Properties:
+        MfaConfiguration: OFF
+        UserPoolName: ${file(./config.json):deployment.userPoolName}
+        UsernameAttributes:
+          - email
+        Policies:
+          PasswordPolicy:
+            MinimumLength: 6
+            RequireLowercase: False
+            RequireNumbers: True
+            RequireSymbols: False
+            RequireUppercase: True
+    CognitoUserPoolClient:
+      Type: "AWS::Cognito::UserPoolClient"
+      Properties:
+        ClientName: ${file(./config.json):deployment.clientName}
+        GenerateSecret: False
+        UserPoolId:
+          Ref: CognitoUserPool
+    ApiGatewayAuthorizer:
+      DependsOn:
+        - ApiGatewayRestApi
+      Type: AWS::ApiGateway::Authorizer
+      Properties:
+        Name: cognito-authorizer
+        IdentitySource: method.request.header.Authorization
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        Type: COGNITO_USER_POOLS
+        ProviderARNs:
+          - Fn::GetAtt: [CognitoUserPool, Arn]
+
+functions:
+  add_participant:
+    handler: participants/participants.add_participant
+    events:
+      - http:
+          path: participants
+          method: post
+  get_participants:
+    handler: participants/participants.get_participants
+    events:
+      - http:
+          path: participants
+          method: get
+  get_participants_by_activity:
+    handler: participants/participants.get_participants_by_activity
+    events:
+      - http:
+          path: participants/{key}
+          method: get
+  edit_participant:
+    handler: participants/participants.edit_participant
+    events:
+      - http:
+          path: participants/{key}
+          method: post
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+  delete_participant:
+    handler: participants/participants.delete_participant
+    events:
+      - http:
+          path: participants/{key}
+          method: delete
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+  get_activities:
+    handler: activities/activities.get_activities
+    events:
+      - http:
+          path: activities
+          method: get

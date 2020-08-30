@@ -1,0 +1,8 @@
+{
+	"deployment": {
+		"region": "us-west-2",
+		"serviceName": "dashboard-form",
+		"userPoolName": "form-cognito",
+		"clientName": "form-clientname"
+	}
+}
