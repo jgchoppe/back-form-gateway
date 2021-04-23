@@ -33,7 +33,7 @@ $ serverless deploy --aws-profile $profileName
 ### Python Function
 
 Considering that the API is in python, you'll have to create python files.
-For good development purpose, you will have to create a new folder if you want to add a new route (e.g.: users):
+For good development purpose, you will have to create a new folder if you want to add a new type of routes (e.g.: users):
 
 ```bash
 $ mkdir users
